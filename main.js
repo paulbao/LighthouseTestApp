@@ -17,30 +17,32 @@ import {
 import moment from 'moment'
 import Lighthouse from '@lighthouse/sdk-mobile'
 import forEach from 'lodash/fp/forEach'
+import values from 'lodash/values'
 import RNFS from 'react-native-fs'
 
 const directory = Platform.OS === 'ios' ? RNFS.DocumentDirectoryPath : RNFS.ExternalStorageDirectoryPath
-const title = 'UUID,major, minor,rssi \n'
+const title = Platform.OS === 'ios' ? 'minor\trssi\tmajor\tproximity\taccuracy\tuuid\ttimestamp\tkey\n' : 
+  'rssi\tdistance\ttxPower\taccuracy\tminor\tmajor\tuuid\tkey\ttimestamp\n'
 const fileType = '.txt'
 
 // const uuids = ['74278BDA-B644-4520-8F0C-720EAF059935']
 const uuids = [
-   '74278BDA-B644-4520-8F0C-720EAF059935',
-   "4D1D3446-FFF6-4874-AE62-5CF1D775599A",
-   "EDE11286-F076-4D0A-AB9A-285F61C24037",
-   "84903EC2-C8F1-434F-9F7D-FA6CFCE14632",
-   "5A4BCFCE-174E-4BAC-A814-092E77F6B7E5",
-   "1223CBE7-20A0-475E-B44C-5455F221D6B1",
-   "5969209F-E850-4011-A6C6-C653C6BA79BB",
-   "69A86972-2D13-4AAB-807A-D15B60258AA9",
-   "48861D7B-BD90-4445-BA7D-FAB8520AA9F5",
-   "12763660-9EB0-4E25-A029-F5B5C98730B8",
-   "30F546E0-7CFF-4E05-BE8F-C323EC2A41DC",
-   "AD3886AF-3B13-4F29-9748-D0C0CB91E593",
-   "2288CD75-B582-47A5-BA3C-86A5AB0A8AC4",
-   "44F7DD45-09EE-4E89-A6E7-E8E9FB79F4B8",
-   "3971FABE-33BD-4322-A7CD-99277C52498F",
-   "19ED60DF-F2A9-42DF-A1CD-037BFB96E172"
+   '74278BDA-B644-4520-8F0C-720EAF059935'
+   // "4D1D3446-FFF6-4874-AE62-5CF1D775599A",
+   // "EDE11286-F076-4D0A-AB9A-285F61C24037",
+   // "84903EC2-C8F1-434F-9F7D-FA6CFCE14632",
+   // "5A4BCFCE-174E-4BAC-A814-092E77F6B7E5",
+   // "1223CBE7-20A0-475E-B44C-5455F221D6B1",
+   // "5969209F-E850-4011-A6C6-C653C6BA79BB",
+   // "69A86972-2D13-4AAB-807A-D15B60258AA9",
+   // "48861D7B-BD90-4445-BA7D-FAB8520AA9F5",
+   // "12763660-9EB0-4E25-A029-F5B5C98730B8",
+   // "30F546E0-7CFF-4E05-BE8F-C323EC2A41DC",
+   // "AD3886AF-3B13-4F29-9748-D0C0CB91E593",
+   // "2288CD75-B582-47A5-BA3C-86A5AB0A8AC4",
+   // "44F7DD45-09EE-4E89-A6E7-E8E9FB79F4B8",
+   // "3971FABE-33BD-4322-A7CD-99277C52498F",
+   // "19ED60DF-F2A9-42DF-A1CD-037BFB96E172"
    ]
 // const path = `${directory}/logs.txt`
         // params.putString("key", key);
@@ -68,14 +70,14 @@ export default class Main extends Component {
         //add timestamp
         beacon.timestamp = timestamp
         beacon.key = `${beacon.uuid}-${beacon.major}-${beacon.minor}`
-        RNFS.appendFile(path, JSON.stringify(beacon)+'\n', 'utf8')
+        RNFS.appendFile(path, this.convert(beacon)+'\n', 'utf8')
         .then((success) => {
           console.log('FILE WRITTEN!')
         })
         .catch((err) => {
           console.log(err.message)
         })
-        console.log('ranging', beacon)
+        // console.log('ranging', beacon)
 
 
         // RNFS.appendFile(path, '\n', 'utf8')
@@ -100,6 +102,21 @@ export default class Main extends Component {
     this.goRanging = this.goRanging.bind(this)
   }
 
+  convert(beacon) {
+    // return JSON.stringify(beacon)
+    // console.log(JSON.stringify(values(beacon)))
+    let result
+    forEach(value =>{
+      
+
+      if (!result) {
+        result = value.toString()
+      } else {
+        result = result.concat('\t', value)
+      }
+    })(values(beacon))
+    return result
+  }
   startRanging(){
     const {
       fileName,
