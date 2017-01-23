@@ -17,12 +17,14 @@ import {
 import moment from 'moment'
 import Lighthouse from '@lighthouse/sdk-mobile'
 import forEach from 'lodash/fp/forEach'
+import sortBy from 'lodash/fp/sortBy'
+import last from 'lodash/fp/last'
 import values from 'lodash/values'
 import RNFS from 'react-native-fs'
 
 const directory = Platform.OS === 'ios' ? RNFS.DocumentDirectoryPath : RNFS.ExternalStorageDirectoryPath
-const title = Platform.OS === 'ios' ? 'minor\trssi\tmajor\tproximity\taccuracy\tuuid\ttimestamp\tkey\n' : 
-  'rssi\tdistance\ttxPower\taccuracy\tminor\tmajor\tuuid\tkey\ttimestamp\n'
+const title = Platform.OS === 'ios' ? 'minor\trssi\tmajor\tproximity\taccuracy\tuuid\ttimestamp\tkey\tnearest\n' : 
+  'rssi\tdistance\ttxPower\taccuracy\tminor\tmajor\tuuid\tkey\ttimestamp\tnearest\n'
 const fileType = '.txt'
 
 // const uuids = ['74278BDA-B644-4520-8F0C-720EAF059935']
@@ -63,13 +65,21 @@ export default class Main extends Component {
     }
 
     DeviceEventEmitter.addListener('didRangeBeacons', data => {
-      const beacons = data.beacons
+      const beacons = sortBy('rssi')(data.beacons)
+      const nearestBeacon = last(beacons)
+      const nearestBeaconKey = this.genarateKey(nearestBeacon)
+      // const beacons = data.beacons
       const path = `${directory}/${this.state.fileName}${fileType}`
       const timestamp = moment().format('h:mm:ss a')
+
       forEach(beacon => {
         //add timestamp
         beacon.timestamp = timestamp
-        beacon.key = `${beacon.uuid}-${beacon.major}-${beacon.minor}`
+        const beaconKey = this.genarateKey(beacon)
+        beacon.key = beaconKey
+        if (beaconKey === nearestBeaconKey) {
+          beacon.nearest = true
+        }
         RNFS.appendFile(path, this.convert(beacon)+'\n', 'utf8')
         .then((success) => {
           console.log('FILE WRITTEN!')
@@ -100,6 +110,10 @@ export default class Main extends Component {
     this.buttonOnClicked = this.buttonOnClicked.bind(this)
     this.startRanging = this.startRanging.bind(this)
     this.goRanging = this.goRanging.bind(this)
+  }
+
+  genarateKey(beacon) {
+    return `${beacon.uuid}-${beacon.major}-${beacon.minor}`
   }
 
   convert(beacon) {
