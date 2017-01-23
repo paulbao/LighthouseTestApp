@@ -18,7 +18,7 @@ import moment from 'moment'
 import Lighthouse from '@lighthouse/sdk-mobile'
 import forEach from 'lodash/fp/forEach'
 import sortBy from 'lodash/fp/sortBy'
-import last from 'lodash/fp/last'
+import head from 'lodash/fp/head'
 import values from 'lodash/values'
 import RNFS from 'react-native-fs'
 
@@ -65,8 +65,8 @@ export default class Main extends Component {
     }
 
     DeviceEventEmitter.addListener('didRangeBeacons', data => {
-      const beacons = sortBy('rssi')(data.beacons)
-      const nearestBeacon = last(beacons)
+      const beacons = sortBy('accuracy')(data.beacons)
+      const nearestBeacon = head(beacons)
       const nearestBeaconKey = this.genarateKey(nearestBeacon)
       // const beacons = data.beacons
       const path = `${directory}/${this.state.fileName}${fileType}`
